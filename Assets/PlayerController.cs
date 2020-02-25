@@ -6,15 +6,22 @@ public class PlayerController : MonoBehaviour {
 	//Variables
 	Rigidbody2D rb;
 	bool facingRight;
+	bool isGrounded;
+	Animator anim;
 
-
-	public float speed;
+	public float moveSpeed;
+	public float jumpSpeed;
 	
 	//for horizontal input
 	float h;
 
+	//for jumping
+	float v;
+
+	//setup
 	void Awake() {
-		rb = GetComponent<Rigidbody2D>();
+		rb = GetComponent<Rigidbody2D> ();
+		anim = GetComponent<Animator> ();
 	}
 
 	// Use this for initialization
@@ -26,21 +33,35 @@ public class PlayerController : MonoBehaviour {
 	void FixedUpdate () {
 		//uses the input manager in the unity editor to get the direction and assigns it to h
 		h = Input.GetAxis("Horizontal");
-
-		//be sure to pass h into move flip function
-		move(h);
+		v = Input.GetAxis ("Vertical");
+		move(h,v);
 		flip(h);
-
-
 	}
 
-	void move(float h) {
-		// takes the value h and applies it to the horizontal axis
-		rb.velocity = new Vector2(h * speed * Time.deltaTime, rb.velocity.y);
-
-		//flips player when changing direction
+	/// <summary>
+	/// Moves the player.
+	/// </summary>
+	/// <param name="h">The horizontal movement direciton taken from the input manager in unity</param>
+	private void move(float h, float v) {
+		if (Input.GetKeyDown("space") && isGrounded) {
+			jump ();
+			anim.SetBool ("jumping", true);
+		} else {
+			// takes the value h and applies it to the horizontal axis
+			rb.velocity = new Vector2(h * moveSpeed * Time.deltaTime, rb.velocity.y);
+		}
+		//changes animation parameter for running, used to transition between moving animation and idle animation
+		if (h == 0) {
+			anim.SetBool ("running", false);
+		} else {
+			anim.SetBool ("running", true);
+		}
 	}
 
+	/// <summary>
+	/// Checks to make sure the player is facing the right direction while moving.
+	/// </summary>
+	/// <param name="h">The horizontal direction will be positive if moving right, negitive if moving left.</param>
 	private void flip(float h)
 	{
 		//if the horizontal is negitive AND not facing right OR if the horizontal is positive and facing right. 
@@ -59,6 +80,22 @@ public class PlayerController : MonoBehaviour {
 			transform.localScale = tScale;
 
 		}
+	}
+		
+	private void jump(){
+		rb.AddForce(new Vector2(0f, jumpSpeed), ForceMode2D.Impulse);
+
+	}
+		
+	void OnCollisionEnter2D(Collision2D other){
+		isGrounded = true;
+	}
+	//going to need to use raycasting method here i think...
+
+
+	void OnCollisionExit2D(Collision2D other){
+		isGrounded = false;
+		anim.SetBool ("jumping", false);
 	}
 
 
