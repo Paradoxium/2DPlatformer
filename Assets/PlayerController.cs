@@ -4,18 +4,18 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour {
 	//Variables
-	Rigidbody2D rb;
-	bool facingRight;
-	bool isGrounded;
-	Animator anim;
+	Rigidbody2D rb;            //refrences the rigidbody2d on the Game Object, used to move the player.
+	bool facingRight;		   //used to changes the players facing direction
+	bool isGrounded;		   //toggled is the player is on the ground
+	Animator anim;			   //references the animator component on the GameObject, used to call animations
+	RaycastHit2D hitGround;    //used to dectect if the player is grounded
+	float groundBuffer = 0.1f; //how far off the ground before considered grounded.
 
-	public float moveSpeed;
+	public float moveSpeed; 
 	public float jumpSpeed;
 	
-	//for horizontal input
+	//for horizontal & Vertical input
 	float h;
-
-	//for jumping
 	float v;
 
 	//setup
@@ -24,11 +24,6 @@ public class PlayerController : MonoBehaviour {
 		anim = GetComponent<Animator> ();
 	}
 
-	// Use this for initialization
-	void Start () {
-		
-	}
-	
 	// Update is called once per frame
 	void FixedUpdate () {
 		//uses the input manager in the unity editor to get the direction and assigns it to h
@@ -38,10 +33,7 @@ public class PlayerController : MonoBehaviour {
 		flip(h);
 	}
 
-	/// <summary>
-	/// Moves the player.
-	/// </summary>
-	/// <param name="h">The horizontal movement direciton taken from the input manager in unity</param>
+	// Moves the player. The horizontal movement direciton taken from the input manager in unity.
 	private void move(float h, float v) {
 		if (Input.GetKeyDown("space") && isGrounded) {
 			jump ();
@@ -56,12 +48,16 @@ public class PlayerController : MonoBehaviour {
 		} else {
 			anim.SetBool ("running", true);
 		}
+		//if gorund check is true, then the player is on the ground and jumping anim parameter is off, if false they are jumping, jump anim parameter is on
+		if (groundCheck () && !isGrounded) {
+			isGrounded = true;
+			anim.SetBool ("jumping", false);
+		} else {
+			isGrounded = false;
+		}
 	}
-
-	/// <summary>
-	/// Checks to make sure the player is facing the right direction while moving.
-	/// </summary>
-	/// <param name="h">The horizontal direction will be positive if moving right, negitive if moving left.</param>
+		
+	//Checks to make sure the player is facing the right direction while moving. The horizontal direction will be positive if moving right, negitive if moving left.
 	private void flip(float h)
 	{
 		//if the horizontal is negitive AND not facing right OR if the horizontal is positive and facing right. 
@@ -78,25 +74,17 @@ public class PlayerController : MonoBehaviour {
 			 
 			//apply to scale to flip
 			transform.localScale = tScale;
-
 		}
 	}
-		
+
+	//applies upward force to make the player jump
 	private void jump(){
 		rb.AddForce(new Vector2(0f, jumpSpeed), ForceMode2D.Impulse);
-
-	}
-		
-	void OnCollisionEnter2D(Collision2D other){
-		isGrounded = true;
-	}
-	//going to need to use raycasting method here i think...
-
-
-	void OnCollisionExit2D(Collision2D other){
-		isGrounded = false;
-		anim.SetBool ("jumping", false);
+		anim.SetBool ("jumping", true);
 	}
 
-
+	//checks to see if the player is within the groundBuffer range, if so return true, if false return false
+	private bool groundCheck(){
+		return Physics2D.Raycast (transform.position, -Vector2.up, groundBuffer + 3f);
+	}
 }
